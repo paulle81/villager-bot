@@ -1,5 +1,5 @@
 const { Client, MessageEmbed } = require('discord.js');
-const { prefix, discordToken, cocApiToken, cocUrl } = require('./config.json');
+const { prefix, cocUrl } = require('./config.json');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const readline = require('readline');
@@ -11,9 +11,9 @@ const TOKEN_PATH = 'token.json';
 const client = new Client();
 
 const authorize = (credentials, spreadsheetId, callback) => {
-    const { client_secret, client_id, redirect_uris } = credentials.installed;
+    const { redirect_uris } = credentials.installed;
     const oAuth2Client = new google.auth.OAuth2(
-        client_id, client_secret, redirect_uris[0]);
+        process.env.client_id, process.env.client_secret, redirect_uris[0]);
 
     // Check if we have previously stored a token.
     fs.readFile(TOKEN_PATH, (err, token) => {
@@ -74,7 +74,7 @@ client.on('message', async message => {
         const { memberList, name, badgeUrls } = await fetch(`${cocUrl}/clans/${encodeURIComponent(args[0])}`, {
             headers: {
                 Accept: 'application/json',
-                authorization: `Bearer ${cocApiToken}`,
+                authorization: `Bearer ${process.env.cocApiToken}`,
             },
         }).then(response => response.json());
         const range = `${args[2] || 'Sheet1'}!A:B`;
@@ -148,4 +148,4 @@ client.on('message', async message => {
 });
 
 
-client.login(discordToken);
+client.login(process.env.discordToken);
