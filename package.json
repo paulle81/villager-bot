@@ -1,0 +1,20 @@
+{
+  "name": "villager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "start": "node .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "eslint": "^7.16.0",
+    "google-spreadsheet": "^3.1.15",
+    "googleapis": "39",
+    "node-fetch": "^2.6.1"
+  }
+}
