@@ -82,32 +82,40 @@ client.once('ready', () => {
                         range,
                     };
 
-                    const { data } = await gsapi.spreadsheets.values.get(opt);
+                    try {
+                        const { data } = await gsapi.spreadsheets.values.get(opt);
 
-                    if (data.values.length) {
-                        const rostered = [];
+                        if (data.values.length) {
+                            const rostered = [];
 
-                        data.values.map(row => rostered.push({ name: row[0], tag: row[1] }));
+                            data.values.map(row => rostered.push({ name: row[0], tag: row[1] }));
 
-                        // eslint-disable-next-line max-nested-callbacks
-                        const currentlyIn = rostered.filter(e => memberList.find(member => member.tag === e.tag));
-                        const notIn = rostered.filter(x => !currentlyIn.includes(x));
+                            // eslint-disable-next-line max-nested-callbacks
+                            const currentlyIn = rostered.filter(e => memberList.find(member => member.tag === e.tag));
+                            const notIn = rostered.filter(x => !currentlyIn.includes(x));
 
-                        const exampleEmbed = new MessageEmbed()
-                            .setColor('#32a852')
-                            .setTitle(name)
-                            .setDescription('It\'s almost time to war, start gathering the troops.')
-                            .setThumbnail(badgeUrls.small)
-                            .addFields(
-                                {
-                                    name: 'These people are not in clan',
-                                    value: notIn.map(e => e.name).join('\n') || 'Everyone is in clan',
-                                },
-                            )
-                            .setTimestamp();
+                            const exampleEmbed = new MessageEmbed()
+                                .setColor('#32a852')
+                                .setTitle(name)
+                                .setDescription('It\'s almost time to war, start gathering the troops.')
+                                .setThumbnail(badgeUrls.small)
+                                .addFields(
+                                    {
+                                        name: 'These people are not in clan',
+                                        value: notIn.map(e => e.name).join('\n') || 'Everyone is in clan',
+                                    },
+                                )
+                                .setTimestamp();
 
-                        message.channel.send(exampleEmbed);
+                            message.channel.send(exampleEmbed);
+                        }
                     }
+                    catch (err) {
+                        console.error(err);
+                        message.channel.send('Spreadsheet ID is invalid or not public');
+                    }
+
+
                 };
             }
             else if (command === 'help') {
@@ -122,7 +130,7 @@ client.once('ready', () => {
                         },
                         {
                             name: '!roster <clantag> <googleSheetId> <sheetName>(optional)',
-                            value: 'The command used to check if people on your roster are in your clan',
+                            value: 'The command used to check if people on your roster are in your clan\nExample: `!roster #8Q82J2CR 1voT8MyUzE2LD8IhfQTgQCKIfEfZoCMlqYS9mfWwUOlg Sheet4`',
                         },
                     )
                     .setTimestamp();
