@@ -12,9 +12,11 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
     "eslint": "^7.16.0",
     "google-spreadsheet": "^3.1.15",
     "googleapis": "39",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "sequelize": "^6.3.5"
   }
 }
