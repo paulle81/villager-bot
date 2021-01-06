@@ -2,62 +2,20 @@ require('dotenv').config();
 const { Client, MessageEmbed } = require('discord.js');
 const { prefix, cocUrl } = require('./config.json');
 const fetch = require('node-fetch');
-const fs = require('fs');
-const readline = require('readline');
 const { google } = require('googleapis');
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
-const TOKEN_PATH = 'token.json';
 
 const IP = require('./modules/ip.js');
 const Clash = require('./modules/clash.js');
 
 const client = new Client();
 
-const authorize = (credentials, spreadsheetId, callback) => {
-    const { redirect_uris } = credentials.installed;
-    const oAuth2Client = new google.auth.OAuth2(
-        process.env.CLIENT_ID, process.env.CLIENT_SECRET, redirect_uris[0]);
-
-    // Check if we have previously stored a token.
-    fs.readFile(TOKEN_PATH, (err, token) => {
-        if (err) return getNewToken(oAuth2Client, spreadsheetId, callback);
-        oAuth2Client.setCredentials(JSON.parse(token));
-        callback(oAuth2Client, spreadsheetId);
-    });
-};
-
-const getNewToken = (oAuth2Client, spreadsheetId, callback) => {
-    const authUrl = oAuth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: SCOPES,
-    });
-    console.log('Authorize this app by visiting this url:', authUrl);
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
-    rl.question('Enter the code from that page here: ', (code) => {
-        rl.close();
-        oAuth2Client.getToken(code, (err, token) => {
-            if (err) return console.error('Error while trying to retrieve access token', err);
-            oAuth2Client.setCredentials(token);
-            // Store the token to disk for later program executions
-            fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-                if (err) return console.error(err);
-                console.log('Token stored to', TOKEN_PATH);
-            });
-            callback(oAuth2Client, spreadsheetId);
-        });
-    });
-};
-
 client.once('ready', () => {
     console.log('Ready!');
 });
 
 (async () => {
-
     try {
         const clashdeveloper_email_address = process.env.CLASH_DEVELOPER_EMAIL;
         const clashdeveloper_password = process.env.CLASH_DEVELOPER_PASSWORD;
@@ -98,48 +56,59 @@ client.once('ready', () => {
                     return message.channel.send(`${args[0]} is not a valid clantag`);
                 }
 
-                const getRoster = (auth, spreadsheetId) => {
-                    const sheets = google.sheets({ version: 'v4', auth });
-                    sheets.spreadsheets.values.get({
-                        spreadsheetId,
-                        range,
-                    }, (err, res) => {
-                        if (err) return console.log('The API returned an error: ' + err);
-                        const rows = res.data.values;
-                        if (rows.length) {
-                            const rostered = [];
+                const clientJWT = new google.auth.JWT(
+                    process.env.CLIENT_EMAIL, null, process.env.PRIVATE_KEY.replace(/\\n/gm, '\n'), SCOPES,
+                );
 
-                            rows.map(row => rostered.push({ name: row[0], tag: row[1] }));
-
-                            const currentlyIn = rostered.filter(e => memberList.find(member => member.tag === e.tag));
-                            const notIn = rostered.filter(x => !currentlyIn.includes(x));
-
-                            const exampleEmbed = new MessageEmbed()
-                                .setColor('#32a852')
-                                .setTitle(name)
-                                .setDescription('It\'s almost time to war, start gathering the troops.')
-                                .setThumbnail(badgeUrls.small)
-                                .addFields(
-                                    {
-                                        name: 'These people are not in clan',
-                                        value: notIn.map(e => e.name).join('\n') || 'Everyone is in clan',
-                                    },
-                                )
-                                .setTimestamp();
-
-                            message.channel.send(exampleEmbed);
-
-                        }
-                        else {
-                            console.log('No data found.');
-                        }
-                    });
-                };
-
-                fs.readFile('credentials.json', (err, content) => {
-                    if (err) return console.log('Error loading client secret file:', err);
-                    authorize(JSON.parse(content), args[1], getRoster);
+                clientJWT.authorize((err) => {
+                    if (err) {
+                        console.error(err);
+                        return;
+                    }
+                    else {
+                        console.log('connected');
+                        gsrun(clientJWT);
+                    }
                 });
+
+                const gsrun = async (cl) => {
+                    const gsapi = google.sheets({
+                        version: 'v4',
+                        auth: cl,
+                    });
+
+                    const opt = {
+                        spreadsheetId: args[1],
+                        range,
+                    };
+
+                    const { data } = await gsapi.spreadsheets.values.get(opt);
+
+                    if (data.values.length) {
+                        const rostered = [];
+
+                        data.values.map(row => rostered.push({ name: row[0], tag: row[1] }));
+
+                        // eslint-disable-next-line max-nested-callbacks
+                        const currentlyIn = rostered.filter(e => memberList.find(member => member.tag === e.tag));
+                        const notIn = rostered.filter(x => !currentlyIn.includes(x));
+
+                        const exampleEmbed = new MessageEmbed()
+                            .setColor('#32a852')
+                            .setTitle(name)
+                            .setDescription('It\'s almost time to war, start gathering the troops.')
+                            .setThumbnail(badgeUrls.small)
+                            .addFields(
+                                {
+                                    name: 'These people are not in clan',
+                                    value: notIn.map(e => e.name).join('\n') || 'Everyone is in clan',
+                                },
+                            )
+                            .setTimestamp();
+
+                        message.channel.send(exampleEmbed);
+                    }
+                };
             }
             else if (command === 'help') {
                 const exampleEmbed = new MessageEmbed()
@@ -166,8 +135,6 @@ client.once('ready', () => {
     catch (err) {
         console.error(err);
     }
-
-
 })();
 
 client.login(process.env.DISCORD_TOKEN);
