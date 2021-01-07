@@ -1,4 +1,5 @@
 {
-    "prefix": "!",
-    "cocUrl": "https://api.clashofclans.com/v1"
+    "prefix": "!vr ",
+    "cocUrl": "https://api.clashofclans.com/v1",
+    "mongoPath": "mongodb://localhost:27017/villagerBot"
 }

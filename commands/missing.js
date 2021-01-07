@@ -4,21 +4,24 @@ const { google } = require('googleapis');
 
 const Clash = require('../modules/clash.js');
 const IP = require('../modules/ip.js');
+const mongo = require('../modules/mongo');
+const clanSchema = require('../schemas/clan-schema');
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
-exports.run = async (client, message, args) => {
-    if (!args.length) {
-        return message.channel.send(`You didn't provide arguments, ${message.author}!`);
+exports.run = async (client, message) => {
+    const { channel, content, guild } = message;
+
+    let spreadsheetId = content;
+    const split = spreadsheetId.split(' ');
+
+    if (split.length < 3) {
+        channel.send('Please provide spreadsheet ID');
+        return;
     }
 
-    if (!args[0]) {
-        return message.channel.send(`You didn't provide clantag, ${message.author}!`);
-    }
-
-    if (!args[1]) {
-        return message.channel.send(`You didn't provide spreadsheet, ${message.author}!`);
-    }
+    split.splice(0, 2);
+    spreadsheetId = split;
 
     const clashdeveloper_email_address = process.env.CLASH_DEVELOPER_EMAIL;
     const clashdeveloper_password = process.env.CLASH_DEVELOPER_PASSWORD;
@@ -27,16 +30,32 @@ exports.run = async (client, message, args) => {
 
     const token = await Clash.getToken(external_ip, clashdeveloper_email_address, clashdeveloper_password);
 
-    const { memberList, name, badgeUrls } = await fetch(`${client.config.cocUrl}/clans/${encodeURIComponent(args[0])}`, {
+    let tempData;
+
+    if (!tempData) {
+        console.log('fetching from db');
+        await mongo().then(async mongoose => {
+            try {
+                const result = await clanSchema.findOne({ _id: guild.id });
+
+                tempData = [result.channelId, result.clanTag];
+            }
+            finally {
+                mongoose.connection.close();
+            }
+        });
+    }
+
+    const { memberList, name, badgeUrls } = await fetch(`${client.config.cocUrl}/clans/${encodeURIComponent(tempData[1])}`, {
         headers: {
             Accept: 'application/json',
             authorization: `Bearer ${token}`,
         },
     }).then(response => response.json());
-    const range = `${args[2] || 'Sheet1'}!A:B`;
+    const range = `${spreadsheetId[1] || 'Sheet1'}!A:B`;
 
     if (memberList === undefined) {
-        return message.channel.send(`${args[0]} is not a valid clantag`);
+        return message.channel.send(`${tempData[1]} is not a valid clantag`);
     }
 
     const clientJWT = new google.auth.JWT(
@@ -61,7 +80,7 @@ exports.run = async (client, message, args) => {
         });
 
         const opt = {
-            spreadsheetId: args[1],
+            spreadsheetId: spreadsheetId[0],
             range,
         };
 
@@ -74,7 +93,7 @@ exports.run = async (client, message, args) => {
                 data.values.map(row => rostered.push({ name: row[0], tag: row[1] }));
 
                 // eslint-disable-next-line max-nested-callbacks
-                const currentlyIn = rostered.filter(e => memberList.find(member => member.tag === e.tag));
+                const currentlyIn = rostered.filter(e => memberList.find(x => x.tag === e.tag));
                 const notIn = rostered.filter(x => !currentlyIn.includes(x));
 
                 const exampleEmbed = new MessageEmbed()

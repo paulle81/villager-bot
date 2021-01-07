@@ -7,11 +7,11 @@ exports.run = (client, message) => {
         .setDescription('Help section')
         .addFields(
             {
-                name: '!help',
+                name: '!vr help',
                 value: 'This command',
             },
             {
-                name: '!roster <clantag> <googleSheetId> <sheetName>(optional)',
+                name: '!vr roster <clantag> <googleSheetId> <sheetName>(optional)',
                 value: 'The command used to check if people on your roster are in your clan\nExample: `!roster #8Q82J2CR 1voT8MyUzE2LD8IhfQTgQCKIfEfZoCMlqYS9mfWwUOlg Sheet4`',
             },
         )
