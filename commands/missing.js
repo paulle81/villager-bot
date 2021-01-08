@@ -90,7 +90,7 @@ exports.run = async (client, message) => {
             if (data.values.length) {
                 const rostered = [];
 
-                data.values.map(row => rostered.push({ name: row[0], tag: row[1] }));
+                data.values.map(row => rostered.push({ tag: row[0], name: row[1] }));
 
                 // eslint-disable-next-line max-nested-callbacks
                 const currentlyIn = rostered.filter(e => memberList.find(x => x.tag === e.tag));

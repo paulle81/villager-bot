@@ -11,8 +11,12 @@ exports.run = (client, message) => {
                 value: 'This command',
             },
             {
-                name: '!vr roster <clantag> <googleSheetId> <sheetName>(optional)',
-                value: 'The command used to check if people on your roster are in your clan\nExample: `!roster #8Q82J2CR 1voT8MyUzE2LD8IhfQTgQCKIfEfZoCMlqYS9mfWwUOlg Sheet4`',
+                name: '!vr setclan <clantag>',
+                value: 'Sets the clan for the server',
+            },
+            {
+                name: '!vr missing <googleSheetId> <sheetName>(optional)',
+                value: 'The command used to check if people on your roster are in your clan\nExample: `!vr missing 1voT8MyUzE2LD8IhfQTgQCKIfEfZoCMlqYS9mfWwUOlg Sheet4`',
             },
         )
         .setTimestamp();
