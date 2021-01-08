@@ -1,8 +1,6 @@
 const mongo = require('../modules/mongo');
 const clanSchema = require('../schemas/clan-schema');
 
-const cache = {};
-
 exports.run = async (_client, message) => {
     const { member, channel, content, guild } = message;
 
@@ -20,8 +18,6 @@ exports.run = async (_client, message) => {
     }
 
     clanTag = split.pop();
-
-    cache[guild.id] = [channel.id, clanTag];
 
     await mongo().then(async mongoose => {
         try {
@@ -45,5 +41,3 @@ exports.run = async (_client, message) => {
         }
     });
 };
-
-// module.exports = cache;
