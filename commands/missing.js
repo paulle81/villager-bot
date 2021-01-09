@@ -111,13 +111,10 @@ exports.run = async (client, message) => {
                     .addFields(
                         {
                             name: 'Player',
-                            value: notIn.map(e => e.name).join('\n') || 'Everyone is in clan',
-                            inline: true,
-                        },
-                        {
-                            name: 'Discord ID',
-                            value: notIn.map(e => e.discordId ? `<@${e.discordId}>` : '-').join('\n') || '',
-                            inline: true,
+                            value: notIn.map(e => {
+                                const embedDiscordId = e.discordId ? `<@${e.discordId}>` : '';
+                                return '`' + e.name + '\t`' + embedDiscordId;
+                            }) || 'Everyone is in clan',
                         },
                     )
                     .setTimestamp();

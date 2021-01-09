@@ -15,6 +15,10 @@ exports.run = (client, message) => {
                 value: 'Sets the clan for the server',
             },
             {
+                name: '!vr addplayer <playertag> <discordTag>(ADMIN only)',
+                value: 'Sets the playertag for the discord user',
+            },
+            {
                 name: '!vr missing <googleSheetId> <sheetName>(optional)',
                 value: 'The command used to check if people on your roster are in your clan\nExample: `!vr missing 1voT8MyUzE2LD8IhfQTgQCKIfEfZoCMlqYS9mfWwUOlg Sheet4`',
             },
