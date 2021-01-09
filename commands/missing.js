@@ -12,8 +12,8 @@ const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 exports.run = async (client, message) => {
     const { channel, content, guild } = message;
 
-    let spreadsheetId = content;
-    const split = spreadsheetId.split(' ');
+    let args = content;
+    const split = args.split(/[ ]+/);
 
     if (split.length < 3) {
         channel.send('Please provide spreadsheet ID');
@@ -21,7 +21,13 @@ exports.run = async (client, message) => {
     }
 
     split.splice(0, 2);
-    spreadsheetId = split;
+    args = split;
+    const spreadsheetId = args[0];
+    let sheet;
+    if (args.length > 1) {
+        args.splice(0, 1);
+        sheet = args.join(' ');
+    }
 
     const clashdeveloper_email_address = process.env.CLASH_DEVELOPER_EMAIL;
     const clashdeveloper_password = process.env.CLASH_DEVELOPER_PASSWORD;
@@ -40,7 +46,7 @@ exports.run = async (client, message) => {
             authorization: `Bearer ${token}`,
         },
     }).then(response => response.json());
-    const range = `${spreadsheetId[1] || 'Sheet1'}!A:B`;
+    const range = `'${sheet || 'Sheet1'}'!A:C`;
 
     if (memberList === undefined) {
         return message.channel.send(`${clanTag} is not a valid clantag`);
@@ -68,7 +74,7 @@ exports.run = async (client, message) => {
         });
 
         const opt = {
-            spreadsheetId: spreadsheetId[0],
+            spreadsheetId,
             range,
         };
 
@@ -80,7 +86,7 @@ exports.run = async (client, message) => {
                 let playerResult;
                 let discordId;
 
-                data.values.map(row => rostered.push({ tag: row[0], name: row[1] }));
+                data.values.map(row => rostered.push({ tag: row[0], name: row[1], th: row[2] || '' }));
                 const promises = rostered.map(async obj => {
                     playerResult = await playerSchema.findOne({ _id: obj.tag });
 
@@ -113,7 +119,7 @@ exports.run = async (client, message) => {
                             name: 'Player',
                             value: notIn.map(e => {
                                 const embedDiscordId = e.discordId ? `<@${e.discordId}>` : '';
-                                return '`' + e.name + '\t`' + embedDiscordId;
+                                return '`' + e.th + ' ' + e.name + '\t`' + embedDiscordId;
                             }) || 'Everyone is in clan',
                         },
                     )
