@@ -1,4 +1,3 @@
-const mongo = require('../modules/mongo');
 const clanSchema = require('../schemas/clan-schema');
 
 exports.run = async (_client, message) => {
@@ -19,25 +18,18 @@ exports.run = async (_client, message) => {
 
     clanTag = split.pop();
 
-    await mongo().then(async mongoose => {
-        try {
-            await clanSchema.findOneAndUpdate(
-                {
-                    _id: guild.id,
-                },
-                {
-                    _id: guild.id,
-                    channelId: channel.id,
-                    clanTag,
-                },
-                {
-                    upsert: true,
-                },
-            );
-            channel.send(`${clanTag} is now set`);
-        }
-        finally {
-            mongoose.connection.close();
-        }
-    });
+    await clanSchema.findOneAndUpdate(
+        {
+            _id: guild.id,
+        },
+        {
+            _id: guild.id,
+            channelId: channel.id,
+            clanTag,
+        },
+        {
+            upsert: true,
+        },
+    );
+    channel.send(`${clanTag} is now set`);
 };

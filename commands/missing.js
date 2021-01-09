@@ -4,8 +4,8 @@ const { google } = require('googleapis');
 
 const Clash = require('../modules/clash.js');
 const IP = require('../modules/ip.js');
-const mongo = require('../modules/mongo');
 const clanSchema = require('../schemas/clan-schema');
+const playerSchema = require('../schemas/player-schema');
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
@@ -30,23 +30,11 @@ exports.run = async (client, message) => {
 
     const token = await Clash.getToken(external_ip, clashdeveloper_email_address, clashdeveloper_password);
 
-    let tempData;
+    const result = await clanSchema.findOne({ _id: guild.id });
 
-    if (!tempData) {
-        console.log('fetching from db');
-        await mongo().then(async mongoose => {
-            try {
-                const result = await clanSchema.findOne({ _id: guild.id });
+    const clanTag = result.clanTag;
 
-                tempData = [result.channelId, result.clanTag];
-            }
-            finally {
-                mongoose.connection.close();
-            }
-        });
-    }
-
-    const { memberList, name, badgeUrls } = await fetch(`${client.config.cocUrl}/clans/${encodeURIComponent(tempData[1])}`, {
+    const { memberList, name, badgeUrls } = await fetch(`${client.config.cocUrl}/clans/${encodeURIComponent(clanTag)}`, {
         headers: {
             Accept: 'application/json',
             authorization: `Bearer ${token}`,
@@ -55,7 +43,7 @@ exports.run = async (client, message) => {
     const range = `${spreadsheetId[1] || 'Sheet1'}!A:B`;
 
     if (memberList === undefined) {
-        return message.channel.send(`${tempData[1]} is not a valid clantag`);
+        return message.channel.send(`${clanTag} is not a valid clantag`);
     }
 
     const clientJWT = new google.auth.JWT(
@@ -88,9 +76,25 @@ exports.run = async (client, message) => {
             const { data } = await gsapi.spreadsheets.values.get(opt);
 
             if (data.values.length) {
-                const rostered = [];
+                let rostered = [];
+                let playerResult;
+                let discordId;
 
                 data.values.map(row => rostered.push({ tag: row[0], name: row[1] }));
+                const promises = rostered.map(async obj => {
+                    playerResult = await playerSchema.findOne({ _id: obj.tag });
+
+                    if (playerResult !== null && playerResult._id === obj.tag) {
+                        discordId = playerResult.discordId;
+                    }
+
+                    return {
+                        ...obj,
+                        discordId,
+                    };
+                });
+
+                rostered = await Promise.all(promises);
 
                 // eslint-disable-next-line max-nested-callbacks
                 const currentlyIn = rostered.filter(e => memberList.find(x => x.tag === e.tag));
@@ -105,6 +109,12 @@ exports.run = async (client, message) => {
                         {
                             name: 'These people are not in clan',
                             value: notIn.map(e => e.name).join('\n') || 'Everyone is in clan',
+                            inline: true,
+                        },
+                        {
+                            name: 'Discord ID',
+                            value: notIn.map(e => e.discordId ? `<@${e.discordId}>` : '-').join('\n') || '',
+                            inline: true,
                         },
                     )
                     .setTimestamp();

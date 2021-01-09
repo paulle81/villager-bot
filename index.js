@@ -1,13 +1,16 @@
 require('dotenv').config();
 const { Client, Collection } = require('discord.js');
 const fs = require('fs');
+const mongo = require('./modules/mongo');
 const config = require('./config.json');
 
 const client = new Client();
 client.config = config;
 
-client.once('ready', () => {
+client.once('ready', async () => {
     console.log('Ready!');
+
+    await mongo();
 });
 
 fs.readdir('./events/', (err, files) => {
