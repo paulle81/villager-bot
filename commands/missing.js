@@ -106,11 +106,11 @@ exports.run = async (client, message) => {
                 const exampleEmbed = new MessageEmbed()
                     .setColor('#32a852')
                     .setTitle(name)
-                    .setDescription('It\'s almost time to war, start gathering the troops.')
+                    .setDescription('It\'s almost time to war, start gathering the troops. These people are not in clan.')
                     .setThumbnail(badgeUrls.small)
                     .addFields(
                         {
-                            name: 'These people are not in clan',
+                            name: 'Player',
                             value: notIn.map(e => e.name).join('\n') || 'Everyone is in clan',
                             inline: true,
                         },
