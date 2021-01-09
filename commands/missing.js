@@ -87,6 +87,9 @@ exports.run = async (client, message) => {
                     if (playerResult !== null && playerResult._id === obj.tag) {
                         discordId = playerResult.discordId;
                     }
+                    else {
+                        discordId = undefined;
+                    }
 
                     return {
                         ...obj,
